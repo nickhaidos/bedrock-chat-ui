@@ -2,6 +2,8 @@
 
 A simple Flask-based web application that provides a user-friendly conversation interface for interacting with Amazon Bedrock's Language Models (LLMs).
 
+![Bedrock Chat UI Screenshot](assets/interface.png)
+
 ## Features
 
 - Clean and intuitive web interface for LLM interactions
