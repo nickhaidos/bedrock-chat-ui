@@ -55,7 +55,7 @@ AWS_DEFAULT_REGION=your_region
 python server_script.py
 ```
 
-2. Open your web browser and navigate to:
+2. Open your web browser and navigate to the default address (port can be changed in the main script):
 ```
 http://localhost:5000
 ```
