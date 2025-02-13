@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bedrock Chat Interface</title>
+
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+        }
+
+        .params, .model-selector {
+            background-color: #2d2d2d;
+            border: 1px solid #404040;
+        }
+
+        .chat-container {
+            background-color: #2d2d2d;
+            border: 1px solid #404040;
+        }
+
+        .user-message {
+            background-color: #2b5c8c;
+            color: #ffffff;
+        }
+
+        .assistant-message {
+            background-color: #3d3d3d;
+            color: #ffffff;
+        }
+
+        .image-message {
+            background-color: #8b6133;
+            color: #ffffff;
+        }
+
+        .document-message {
+            background-color: #2d5a2d;
+            color: #ffffff;
+        }
+
+        #userInput, #systemPrompt {
+            background-color: #2d2d2d;
+            color: #ffffff;
+            border: 1px solid #404040;
+        }
+
+        button {
+            background-color: #0066cc;
+            color: white;
+        }
+
+        button:hover {
+            background-color: #0052a3;
+        }
+
+        select {
+            background-color: #2d2d2d;
+            color: #ffffff;
+            border: 1px solid #404040;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Open Sans', sans-serif;
+            width: 80%;
+            margin: 0 auto;
+            padding: 20px;
+            min-width: 600px;
+        }
+        
+        .params {
+            margin-bottom: 20px;
+            padding: 15px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .model-selector {
+            margin-bottom: 20px;
+            padding: 15px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        #modelSelect {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            min-width: 200px;
+        }
+        
+        .status-area {
+            margin-top: 15px;
+            padding: 10px;
+            min-height: 20px;
+            color: #666;
+            text-align: center;
+        }
+        
+        .error-message {
+            color: #dc3545;
+        }
+        
+        .waiting-message {
+            color: #007bff;
+        }
+
+        .chat-container {
+            height: 10vh;
+            width: 100%;
+            overflow-y: auto;
+            padding: 20px;
+            margin-bottom: 20px;
+            resize: vertical;
+            min-height: 300px;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            padding: 12px;
+            max-width: 80%;
+            white-space: pre-wrap;
+        }
+
+        .user-message {
+            border-radius: 10px;
+            margin-left: auto;  /* Keeps it on the right side */
+            width: 50%;        /* Sets width to 30% */
+            text-align: left;  /* Aligns text to the left */
+        }
+
+        .image-message {
+            border-radius: 10px;
+            margin-left: auto;  /* Keeps it on the right side */
+            width: 50%;        /* Sets width to 30% */
+            text-align: left;  /* Aligns text to the left */
+        }
+
+        .document-message {
+            border-radius: 10px;
+            margin-left: auto;  /* Keeps it on the right side */
+            width: 50%;        /* Sets width to 30% */
+            text-align: left;  /* Aligns text to the left */
+        }
+        
+        .system-prompt-container {
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: center;
+        }
+
+        .system-prompt-container label {
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .system-prompt-container textarea {
+            flex: 1;
+            margin-left: 10px;
+        }
+
+        .assistant-message {
+            border-radius: 10px;
+            text-align: left;
+        }
+        
+        .input-container {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+        }
+        
+        #userInput {
+            flex-grow: 1;
+            padding: 12px;
+            border-radius: 5px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 50px;
+            font-size: 14px;
+        }
+
+        #systemPrompt {
+            display: inline;
+            width: 100%;
+            padding: 12px;
+            border-radius: 5px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 50px;
+            font-size: 14px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        input[type="number"] {
+            width: 70px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+
+        .image-upload-container, .document-upload-container {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        #imageStatus, #documentStatus {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                width: 95%;
+                min-width: unset;
+                padding: 10px;
+            }
+            
+            .message {
+                max-width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="model-selector">
+        <select id="modelSelect" onchange="changeModel()">
+            <option value="">Loading models...</option>
+        </select>
+        <span id="currentModel"></span>
+    </div>
+
+    <div class="params system-prompt-container">
+        <label>System Prompt:</label>
+        <textarea id="systemPrompt" placeholder="Enter system prompt (leave empty for default)" rows="3" style="width: 100%;"></textarea>
+    </div>
+
+    <div class="params">
+        <label>Temperature: <input type="number" id="temperature" value="0.5" step="0.1" min="0" max="1"></label>
+        <label>Top P: <input type="number" id="topP" value="0.9" step="0.1" min="0" max="1"></label>
+        <label>Max Tokens: <input type="number" id="maxTokens" value="2000" step="100" min="1"></label>
+        <button onclick="clearHistory()">Clear History</button>
+    </div>
+    
+    <div class="chat-container" id="chatContainer"></div>
+    
+    <div class="image-upload-container" style="margin-bottom: 10px;">
+        <button id="uploadImageBtn" disabled>Upload Image</button>
+        <input type="file" id="imageInput" accept="image/*" style="display: none;">
+        <span id="imageStatus"></span>
+    </div>
+
+    <div class="document-upload-container" style="margin-bottom: 10px;">
+        <button id="uploadDocBtn">Upload Document</button>
+        <input type="file" id="documentInput" accept=".pdf,.csv,.doc,.docx,.xls,.xlsx,.html,.txt,.md" style="display: none;">
+        <span id="documentStatus"></span>
+    </div>
+
+    <div class="input-container">
+        <textarea id="userInput" placeholder="Type your message... (Shift+Enter for new line)"></textarea>
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <div id="statusArea" class="status-area"></div>
+
+    <script>
+
+        let currentImageData = null;
+        let currentImageFilename = null;
+        let currentDocumentData = null;
+        let currentDocumentFilename = null;
+
+
+        function resetImageState() {
+            currentImageData = null;
+            currentImageFilename = null;
+            document.getElementById('imageStatus').textContent = '';
+            document.getElementById('imageInput').value = '';
+        }
+
+        function resetDocumentState() {
+            currentDocumentData = null;
+            currentDocumentFilename = null;
+            document.getElementById('documentStatus').textContent = '';
+            document.getElementById('documentInput').value = '';
+        }
+
+        function updateImageUploadButton(modelData) {
+            const uploadBtn = document.getElementById('uploadImageBtn');
+            const supportsImage = modelData.modalities.includes('IMAGE');
+            uploadBtn.disabled = !supportsImage;
+            if (!supportsImage) {
+                document.getElementById('imageStatus').textContent = '';
+            }
+        }
+
+        document.getElementById('uploadImageBtn').addEventListener('click', function() {
+            document.getElementById('imageInput').click();
+        });
+
+        document.getElementById('uploadDocBtn').addEventListener('click', function() {
+            document.getElementById('documentInput').click();
+        });
+
+        document.getElementById('imageInput').addEventListener('change', async function(e) {
+            if (e.target.files && e.target.files[0]) {
+                const file = e.target.files[0];
+                const formData = new FormData();
+                formData.append('image', file);
+
+                try {
+                    const response = await fetch('/upload_image', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await response.json();
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+
+                    currentImageData = data.preview;
+                    currentImageFilename = data.filename;
+                    document.getElementById('imageStatus').textContent = `Image uploaded: ${data.filename}`;
+                } catch (error) {
+                    console.error('Error uploading image:', error);
+                    showStatus('Error uploading image: ' + error.message, true);
+                }
+            }
+        });
+
+        document.getElementById('documentInput').addEventListener('change', async function(e) {
+            if (e.target.files && e.target.files[0]) {
+                const file = e.target.files[0];
+                const formData = new FormData();
+                formData.append('document', file);
+
+                try {
+                    const response = await fetch('/upload_document', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await response.json();
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+
+                    currentDocumentData = data.preview;
+                    currentDocumentFilename = data.filename;
+                    document.getElementById('documentStatus').textContent = `Document uploaded: ${data.filename}`;
+                } catch (error) {
+                    console.error('Error uploading document:', error);
+                    showStatus('Error uploading document: ' + error.message, true);
+                }
+            }
+        });
+
+        async function sendMessage() {
+            // Get all required elements
+            const userInput = document.getElementById('userInput');
+            const temperatureInput = document.getElementById('temperature');
+            const topPInput = document.getElementById('topP');
+            const maxTokensInput = document.getElementById('maxTokens');
+            const systemPrompt = document.getElementById('systemPrompt');
+    
+            // Check if all elements exist
+            if (!userInput) {
+                console.error('Could not find userInput element');
+                return;
+            }
+            if (!temperatureInput || !topPInput || !maxTokensInput) {
+                console.error('Could not find one or more parameter input elements');
+                return;
+            }
+    
+            const message = userInput.value.trim();
+            if (!message) return;
+    
+            // Add user message to chat
+            addMessageToChat('user', message);
+            if (currentImageData) {
+                addMessageToChat('image', `Image Uploaded: ${currentImageFilename}`);
+            }
+            if (currentDocumentData) {
+                addMessageToChat('document', `Document Uploaded: ${currentDocumentFilename}`);
+            }
+            userInput.value = '';
+    
+            // Get parameter values with error checking
+            const params = {
+                temperature: parseFloat(temperatureInput.value) || 0.5,
+                topP: parseFloat(topPInput.value) || 0.9,
+                maxTokens: parseInt(maxTokensInput.value) || 2000
+            };
+
+            const messageData = {
+                message: message,
+                params: params,
+                modelId: currentModelId
+            };
+
+            if (currentImageData) {
+                messageData.image = currentImageData;
+            }
+
+            if (currentDocumentData) {
+                messageData.document = currentDocumentData;
+                messageData.documentFilename = currentDocumentFilename;
+            }
+
+            if (systemPrompt.value) {
+                messageData.systemPrompt = systemPrompt.value.trim();
+            }
+    
+            showStatus('Waiting for answer...');
+
+            try {
+                // Send message to server
+                const response = await fetch('/send_message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(messageData)
+                });
+    
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || `HTTP error! status: ${response.status}`);
+                }
+    
+                if (data.error) {
+                    showStatus('Error: ' + data.error, true);
+                    resetImageState();
+                    resetDocumentState();
+                    // addMessageToChat('assistant', 'Error: ' + data.error);
+                } else {
+                    addMessageToChat('assistant', data.response);
+                    showStatus('', false);
+                    resetImageState();
+                    resetDocumentState();
+                }
+
+            } catch (error) {
+                showStatus('Error: ' + error.message, true);
+                console.error('Error:', error);
+                resetImageState();
+                resetDocumentState();
+                // addMessageToChat('assistant', 'Error: ' + error.message);
+            }
+        }
+    
+
+        let currentModelId = "anthropic.claude-3-5-sonnet-20241022-v2:0";
+        
+        // Load available models when page loads
+        async function loadModels() {
+            try {
+                const response = await fetch('/get_models');
+                const data = await response.json();
+                
+                if (data.error) {
+                    showStatus('Error loading models: ' + data.error, true);
+                    return;
+                }
+                
+                const modelSelect = document.getElementById('modelSelect');
+                modelSelect.innerHTML = '';
+                
+                let defaultOptionIndex = 0; // Keep track of the Claude 3.5 Sonnet v2 index
+
+                data.models.forEach((model, index) => {
+                    const option = document.createElement('option');
+                    option.value = model.modelId;
+                    option.text = `${model.modelName} (${model.modalities.join(', ')})`;
+                    option.setAttribute('data-modalities', model.modalities.join(','));
+                    modelSelect.appendChild(option);
+
+                    // If this is Claude 3.5 Sonnet v2, save its index
+                    if (model.modelName === "Claude 3.5 Sonnet v2") {
+                        defaultOptionIndex = index;
+                    }
+                });
+                
+                // Set the default selected option
+                modelSelect.selectedIndex = defaultOptionIndex;
+
+                updateCurrentModelDisplay();
+                // Update image upload button based on initial model
+                const selectedOption = modelSelect.options[modelSelect.selectedIndex];
+                updateImageUploadButton({
+                    modelId: selectedOption.value,
+                    modalities: selectedOption.getAttribute('data-modalities').split(',')
+                });
+            } catch (error) {
+                showStatus('Error loading models: ' + error.message, true);
+            }
+        }
+        
+        function updateCurrentModelDisplay() {
+            const modelSelect = document.getElementById('modelSelect');
+            const currentModel = document.getElementById('currentModel');
+            currentModel.textContent = `Current Model: ${modelSelect.options[modelSelect.selectedIndex].text}`;
+        }
+        
+        async function changeModel() {
+            const modelSelect = document.getElementById('modelSelect');
+            const systemPrompt = document.getElementById('systemPrompt');
+            currentModelId = modelSelect.value;
+            
+            // Get the selected option's data
+            const selectedOption = modelSelect.options[modelSelect.selectedIndex];
+            const modelData = {
+                modelId: currentModelId,
+                modalities: selectedOption.getAttribute('data-modalities').split(',')
+            };
+
+            systemPrompt.value = '';
+            
+            updateImageUploadButton(modelData);
+            updateCurrentModelDisplay();
+            resetImageState();
+            resetDocumentState();
+            await clearHistory();
+        }
+        
+        function showStatus(message, isError = false) {
+            const statusArea = document.getElementById('statusArea');
+            statusArea.textContent = message;
+            statusArea.className = 'status-area ' + (isError ? 'error-message' : 'waiting-message');
+        }
+
+
+        function addMessageToChat(role, message) {
+            const chatContainer = document.getElementById('chatContainer');
+            if (!chatContainer) {
+                console.error('Could not find chat container');
+                return;
+            }
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', role + '-message');
+            messageDiv.textContent = message;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    
+        // Allow sending message with Enter key
+        const userInput = document.getElementById('userInput');
+        if (userInput) {
+            userInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+                // Shift+Enter will naturally create a new line since we're using textarea
+            });
+        }
+
+        // Add clear history function
+        async function clearHistory() {
+            const systemPrompt = document.getElementById('systemPrompt');
+            systemPrompt.value = '';
+            try {
+                const response = await fetch('/clear_history', {
+                    method: 'POST',
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                // Clear the chat container
+                const chatContainer = document.getElementById('chatContainer');
+                if (chatContainer) {
+                    chatContainer.innerHTML = '';
+                }
+                resetImageState();
+                resetDocumentState();
+            } catch (error) {
+                console.error('Error:', error);
+                showStatus('Error Clearing History: ' + error.message, true);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadModels);
+    </script>
+</body>
+</html>

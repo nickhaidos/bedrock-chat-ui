@@ -1,0 +1,6 @@
+Flask
+boto3
+botocore
+pillow
+werkzeug
+python-dotenv
