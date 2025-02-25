@@ -65,11 +65,20 @@ def clear_history():
 def get_models():
     try:
         models = br.list_foundation_models()
-        model_list = [{
-            'modelId': m['modelId'],
-            'modelName': m['modelName'],
-            'modalities': m['inputModalities']
-        } for m in models['modelSummaries'] if (m['inferenceTypesSupported']==['ON_DEMAND'] and m['modelLifecycle']['status']=='ACTIVE')]
+        model_list = []
+        for m in models['modelSummaries']:
+            if m['inferenceTypesSupported']==['ON_DEMAND'] and m['modelLifecycle']['status']=='ACTIVE':
+                model_list.append({
+                    'modelId': m['modelId'],
+                    'modelName': m['modelName'],
+                    'modalities': m['inputModalities']
+                })
+            elif m['inferenceTypesSupported']==['INFERENCE_PROFILE'] and m['modelLifecycle']['status']=='ACTIVE':
+                model_list.append({
+                    'modelId': "us."+m['modelId'],
+                    'modelName': m['modelName'],
+                    'modalities': m['inputModalities']
+                })
         return jsonify({"models": model_list})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
