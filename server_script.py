@@ -74,11 +74,12 @@ def get_models():
                     'modalities': m['inputModalities']
                 })
             elif m['inferenceTypesSupported']==['INFERENCE_PROFILE'] and m['modelLifecycle']['status']=='ACTIVE':
-                model_list.append({
-                    'modelId': "us."+m['modelId'],
-                    'modelName': m['modelName'],
-                    'modalities': m['inputModalities']
-                })
+                if region.split('-')[0]=="eu" or region.split('-')[0]=="us":
+                    model_list.append({
+                        'modelId': region.split('-')[0]+"."+m['modelId'],
+                        'modelName': m['modelName'],
+                        'modalities': m['inputModalities']
+                    })
         return jsonify({"models": model_list})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
